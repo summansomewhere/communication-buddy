@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background -->
+    <path
+        android:fillColor="#3F51B5"
+        android:pathData="M0,0h108v108h-108z" />
+    
+    <!-- Message Bubble -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,32L84,32A4,4 0,0 1,88 36L88,56A4,4 0,0 1,84 60L24,60A4,4 0,0 1,20 56L20,36A4,4 0,0 1,24 32z" />
+    
+    <!-- Message Tail -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,60L20,76L30,60" />
+        
+    <!-- Letter A -->
+    <path
+        android:fillColor="#3F51B5"
+        android:pathData="M38,40L43,52L47,52L52,40L48,40L45,48L42,40z" />
+        
+    <!-- Letter B -->
+    <path
+        android:fillColor="#3F51B5"
+        android:pathData="M56,40L56,52L63,52C65,52 67,50 67,48C67,46.5 66,45.5 65,45C66,44.5 67,43.5 67,42C67,40 65,40 63,40zM60,44L63,44C63.5,44 64,44.5 64,45C64,45.5 63.5,46 63,46L60,46zM60,48L63,48C63.5,48 64,48.5 64,49C64,49.5 63.5,50 63,50L60,50z" />
+    
+    <!-- Letter C -->
+    <path
+        android:fillColor="#3F51B5"
+        android:pathData="M70,40L70,52L77,52L77,49L73,49L73,43L77,43L77,40z" />
+</vector> 

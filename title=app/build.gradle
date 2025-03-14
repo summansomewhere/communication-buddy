@@ -1,0 +1,37 @@
+android {
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.freeaac.communicationbuddy"
+        minSdk 21
+        targetSdk 33
+    }
+
+    buildFeatures {
+        compose true
+    }
+
+    composeOptions {
+        // Use a version that is compatible with your Compose libraries
+        kotlinCompilerExtensionVersion "1.5.0"
+    }
+
+    // Other configurations...
+}
+
+dependencies {
+    // Compose UI core
+    implementation "androidx.compose.ui:ui:1.5.0"
+    
+    // Foundation components (includes Image, and Modifier.size extensions)
+    implementation "androidx.compose.foundation:foundation:1.5.0"
+    
+    // Material 3 components (if you're using Material3)
+    implementation "androidx.compose.material3:material3:1.1.0"
+    
+    // Tooling support (for previews etc.)
+    implementation "androidx.compose.ui:ui-tooling-preview:1.5.0"
+    debugImplementation "androidx.compose.ui:ui-tooling:1.5.0"
+    
+    // Other dependencies...
+} 
