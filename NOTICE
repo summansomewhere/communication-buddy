@@ -1,0 +1,53 @@
+Communication Buddy
+Copyright (c) 2024 Robert Fillingame
+
+This product includes software developed by:
+- The Android Open Source Project (AndroidX components, Jetpack Compose)
+- Square, Inc. (Coil Image Loading Library)
+- Google, Inc. (Accompanist Permissions)
+
+---
+
+The Communication Buddy app is licensed under Apache License 2.0.
+
+This application uses or depends on the following libraries, which are
+licensed under the Apache License, Version 2.0:
+
+- AndroidX Core-KTX
+- AndroidX Lifecycle
+- Jetpack Compose
+- Navigation Compose
+- CameraX
+- Coil Compose
+- Accompanist Permissions
+
+The full text of the Apache License 2.0 can be found in the LICENSE file
+or at http://www.apache.org/licenses/LICENSE-2.0
+
+The app uses artificial intelligence assistance from:
+- DALL-E 3 for image and icon creation
+- Cursor AI for development assistance
+
+---
+
+Attributions for specific third-party components:
+
+1. AndroidX Libraries
+   Copyright (c) The Android Open Source Project
+   Licensed under the Apache License, Version 2.0
+
+2. Jetpack Compose
+   Copyright (c) The Android Open Source Project
+   Licensed under the Apache License, Version 2.0
+
+3. CameraX
+   Copyright (c) The Android Open Source Project
+   Licensed under the Apache License, Version 2.0
+
+4. Coil
+   Copyright (c) Coil Contributors
+   Licensed under the Apache License, Version 2.0
+
+5. Accompanist Permissions
+   Copyright (c) Google, Inc.
+   Licensed under the Apache License, Version 2.0 
