@@ -371,7 +371,7 @@ class VocabularyManager(private val context: Context) {
                 }
                 
                 // Prepare the output file before attempting to read the input
-                val outputFile = File(customImagesDir, "$wordId.jpg")
+                val outputFile = File(customImagesDir, "$wordId.webp")
                 Log.d(TAG, "Output file path: ${outputFile.absolutePath}")
                 logToFile("Output file path: ${outputFile.absolutePath}")
                 
@@ -465,11 +465,30 @@ class VocabularyManager(private val context: Context) {
                 Log.d(TAG, "Successfully decoded bitmap: ${bitmap.width}x${bitmap.height}")
                 logToFile("Successfully decoded bitmap: ${bitmap.width}x${bitmap.height}")
                 
+                // Resize large images to a more appropriate size for AAC cards
+                val resizedBitmap = if (bitmap.width > 800 || bitmap.height > 800) {
+                    val scaleFactor = when {
+                        bitmap.width >= bitmap.height -> 800f / bitmap.width
+                        else -> 800f / bitmap.height
+                    }
+                    
+                    val newWidth = (bitmap.width * scaleFactor).toInt()
+                    val newHeight = (bitmap.height * scaleFactor).toInt()
+                    
+                    Log.d(TAG, "Resizing image from ${bitmap.width}x${bitmap.height} to ${newWidth}x${newHeight}")
+                    logToFile("Resizing image from ${bitmap.width}x${bitmap.height} to ${newWidth}x${newHeight}")
+                    
+                    Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+                } else {
+                    bitmap
+                }
+                
                 // Compress and save the bitmap to the file
                 var success = false
                 try {
                     FileOutputStream(outputFile).use { outputStream ->
-                        success = bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+                        // Reduce quality from 80 to 65 to get smaller file sizes while maintaining good image quality
+                        success = resizedBitmap.compress(Bitmap.CompressFormat.WEBP, 65, outputStream)
                         outputStream.flush()
                     }
                     Log.d(TAG, "Compress operation success: $success")
@@ -490,6 +509,10 @@ class VocabularyManager(private val context: Context) {
                 
                 // Recycle the bitmap
                 bitmap.recycle()
+                // Recycle the resized bitmap if it's different from the original
+                if (resizedBitmap != bitmap) {
+                    resizedBitmap.recycle()
+                }
                 
                 // Verify the file was created and has content
                 if (!outputFile.exists()) {

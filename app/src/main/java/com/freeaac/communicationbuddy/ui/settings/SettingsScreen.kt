@@ -162,10 +162,11 @@ fun SettingsScreen(
     var selectedVoice by remember { mutableStateOf(initialVoice) }
     var speechRate by remember { mutableStateOf(sharedPrefs.getFloat("speech_rate", 1.0f)) }
     var speechPitch by remember { mutableStateOf(sharedPrefs.getFloat("speech_pitch", 1.0f)) }
-    var gridSize by remember { mutableStateOf(sharedPrefs.getInt("grid_size", 5)) } // Default to 5 columns
+    var gridSize by remember { mutableStateOf(sharedPrefs.getInt("grid_size", 5)) }
     var textSize by remember { mutableStateOf(sharedPrefs.getString("text_size", "Medium") ?: "Medium") }
     var highContrastMode by remember { mutableStateOf(sharedPrefs.getBoolean("high_contrast_mode", false)) }
     var autoSpeakWords by remember { mutableStateOf(sharedPrefs.getBoolean("auto_speak_words", true)) }
+    var darkMode by remember { mutableStateOf(sharedPrefs.getBoolean("dark_mode", false)) }
     
     // Track whether settings have been changed
     var settingsChanged by remember { mutableStateOf(false) }
@@ -231,6 +232,7 @@ fun SettingsScreen(
             putString("text_size", textSize)
             putBoolean("high_contrast_mode", highContrastMode)
             putBoolean("auto_speak_words", autoSpeakWords)
+            putBoolean("dark_mode", darkMode)
             // Save selected voice name if available
             selectedVoice?.let { voice ->
                 putString("voice_name", voice.name)
@@ -537,13 +539,40 @@ fun SettingsScreen(
             }
             
             // High Contrast Mode
-            SettingsSwitchItem(
+            SettingsSwitchItemWithHelp(
                 title = "High Contrast Mode",
+                subtitle = "Enhanced visibility with stronger color contrast",
+                helpText = "High Contrast Mode improves visibility for users with visual impairments by:\n\n" +
+                          "• Using color combinations with stronger contrast\n" + 
+                          "• Making text more readable against backgrounds\n" +
+                          "• Enhancing the distinction between UI elements\n\n" +
+                          "This mode works in both light and dark themes and changes are applied immediately.",
                 isChecked = highContrastMode,
                 icon = Icons.Default.Info,
                 onCheckedChange = { 
                     highContrastMode = it
                     settingsChanged = true
+                    // Apply change immediately
+                    sharedPrefs.edit().putBoolean("high_contrast_mode", it).apply()
+                }
+            )
+            
+            // Dark Mode
+            SettingsSwitchItemWithHelp(
+                title = "Dark Mode",
+                subtitle = "Use dark theme for better night viewing",
+                helpText = "Dark Mode uses a darker color scheme that is:\n\n" +
+                           "• Easier on the eyes in low light environments\n" +
+                           "• Helps reduce eye strain during extended use\n" +
+                           "• May help conserve battery on some devices\n\n" +
+                           "Changes to this setting are applied immediately.",
+                isChecked = darkMode,
+                icon = Icons.Default.Info,
+                onCheckedChange = { 
+                    darkMode = it
+                    settingsChanged = true
+                    // Apply change immediately
+                    sharedPrefs.edit().putBoolean("dark_mode", it).apply()
                 }
             )
             
@@ -555,7 +584,6 @@ fun SettingsScreen(
             // Auto-speak Words
             SettingsSwitchItem(
                 title = "Auto-speak Words",
-                subtitle = "Speak words when tapped",
                 isChecked = autoSpeakWords,
                 icon = Icons.Default.Info,
                 onCheckedChange = { 
@@ -1319,7 +1347,6 @@ fun SettingsItem(
 @Composable
 fun SettingsSwitchItem(
     title: String,
-    subtitle: String? = null,
     isChecked: Boolean,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onCheckedChange: (Boolean) -> Unit
@@ -1343,13 +1370,6 @@ fun SettingsSwitchItem(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge
             )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
         Switch(
             checked = isChecked,

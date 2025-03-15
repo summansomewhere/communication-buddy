@@ -107,7 +107,8 @@ data class AACItem(
     val label: String,
     val imageRes: Int? = null,
     val category: String = "",  // Added category field
-    val imagePath: String? = null  // Added image path field for custom images
+    val imagePath: String? = null,  // Added image path field for custom images
+    val textOnly: Boolean = false
 )
 data class AACCategory(val name: String, val items: List<AACItem>)
 
@@ -660,6 +661,49 @@ fun AACMainScreen(
             AACItem("legs"),
             AACItem("feet"),
             AACItem("toes")
+        )),
+        AACCategory("Connecting Words", listOf(
+            // Articles
+            AACItem("a", textOnly = true),
+            AACItem("an", textOnly = true),
+            AACItem("the", textOnly = true),
+            // Basic conjunctions
+            AACItem("and", textOnly = true),
+            AACItem("or", textOnly = true),
+            AACItem("but", textOnly = true),
+            // Common prepositions
+            AACItem("to", textOnly = true),
+            AACItem("in", textOnly = true),
+            AACItem("on", textOnly = true),
+            AACItem("at", textOnly = true),
+            AACItem("with", textOnly = true),
+            AACItem("for", textOnly = true),
+            AACItem("of", textOnly = true),
+            AACItem("by", textOnly = true),
+            // Pronouns
+            AACItem("it", textOnly = true),
+            AACItem("this", textOnly = true),
+            AACItem("that", textOnly = true),
+            AACItem("these", textOnly = true),
+            AACItem("those", textOnly = true),
+            // Causal and temporal connectors
+            AACItem("because", textOnly = true),
+            AACItem("so", textOnly = true),
+            AACItem("then", textOnly = true),
+            AACItem("when", textOnly = true),
+            AACItem("while", textOnly = true),
+            // More prepositions
+            AACItem("up", textOnly = true),
+            AACItem("down", textOnly = true),
+            AACItem("over", textOnly = true),
+            AACItem("under", textOnly = true),
+            AACItem("near", textOnly = true),
+            // Additional common words
+            AACItem("can", textOnly = true),
+            AACItem("will", textOnly = true),
+            AACItem("not", textOnly = true),
+            AACItem("here", textOnly = true),
+            AACItem("there", textOnly = true)
         ))
     )
     
@@ -714,11 +758,11 @@ fun AACMainScreen(
         }
     }
     
-    // Build the category list for the bar with Recents first, then All, then other categories
+    // Build the category list for the bar with Recents first, then All, then Connecting Words, then other categories
     val categoriesList = if (recentWords.isEmpty()) {
-        listOf("All") + categoriesWithCustomWords.map { it.name }
+        listOf("All", "Connecting Words") + categoriesWithCustomWords.map { it.name }.filter { it != "Connecting Words" }
     } else {
-        listOf("Recents", "All") + categoriesWithCustomWords.map { it.name }.filter { it != "Recents" }
+        listOf("Recents", "All", "Connecting Words") + categoriesWithCustomWords.map { it.name }.filter { it !in listOf("Recents", "Connecting Words") }
     }
     
     // Hold the user-selected category. Default to Recents if available, otherwise All
@@ -1036,6 +1080,7 @@ fun AACMainScreen(
                             imageRes = item.imageRes,
                             category = item.category,
                             imagePath = item.imagePath,
+                            textOnly = item.textOnly,
                             textStyle = textStyle,
                             highContrastMode = highContrastMode,
                             onClick = {
@@ -1204,7 +1249,8 @@ fun CategoryCard(
     label: String, 
     imageRes: Int? = null, 
     category: String = "", 
-    imagePath: String? = null,  // Add a parameter for imagePath
+    imagePath: String? = null,
+    textOnly: Boolean = false,
     textStyle: TextStyle = MaterialTheme.typography.titleMedium.copy(fontSize = 19.sp, fontWeight = FontWeight.Black),
     highContrastMode: Boolean = false,
     onClick: () -> Unit
@@ -1214,19 +1260,12 @@ fun CategoryCard(
     // Get the vocabulary manager to check for custom images
     val vocabularyManager = remember { VocabularyManager(context) }
     
-    // Determine card background color based on high contrast mode
-    val cardBackgroundColor = if (highContrastMode) {
-        MaterialTheme.colorScheme.surfaceVariant
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
+    // Get colors from the theme instead of using hardcoded values
+    val colorScheme = MaterialTheme.colorScheme
     
-    // Determine text background color based on high contrast mode
-    val textBackgroundColor = if (highContrastMode) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-    } else {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-    }
+    // Use theme colors that respect high contrast mode
+    val cardBackgroundColor = colorScheme.surface
+    val textBackgroundColor = colorScheme.primaryContainer
     
     Card(
         modifier = Modifier
@@ -1243,144 +1282,170 @@ fun CategoryCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Image container
-        Box(
-            modifier = Modifier
-                    .weight(0.65f)
-                    .fillMaxWidth(),
+            // Image or text container
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(if (textOnly) 1f else 0.65f),
                 contentAlignment = Alignment.Center
             ) {
-                // Check if this item has an imagePath (custom image)
-                val customImageBitmap = remember(imagePath) {
-                    if (imagePath != null && imagePath.isNotEmpty()) {
-                        val bitmap = vocabularyManager.loadBitmapFromPath(imagePath)
-                        bitmap?.asImageBitmap()
-                    } else null
-                }
-                
-                if (customImageBitmap != null) {
-                    // If we have a custom image, use it
-                    Log.d("CategoryCard", "Using custom image for $label from path: $imagePath")
-                    Image(
-                        bitmap = customImageBitmap,
-                        contentDescription = label,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
+                if (textOnly) {
+                    // For connecting words, show large bold text instead of an image
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onPrimaryContainer,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 } else {
-                    // Otherwise try to load image from assets based on both category and label
-                    val assetBitmap = remember(label, category) {
-                        // First try with category-specific image naming
-                        if (category.isNotEmpty()) {
-                            // Try category-specific file first (e.g. "animals/chicken.png" or "food/chicken.png")
-                            val categoryVariations = listOf(
-                                "$category/$label",               // e.g. "animals/chicken"
-                                "${category.lowercase()}/${label.lowercase()}",  // e.g. "animals/chicken"
-                                "${category.lowercase()}${label.replaceFirstChar { it.uppercase() }}",  // e.g. "animalsChicken"
-                                "${category.lowercase()}_${label.lowercase()}"   // e.g. "animals_chicken"
-                            ).distinct()
-                            
-                            // Try each category variation
-                            for (variation in categoryVariations) {
-                                try {
-                                    context.assets.open("$variation.png").use { inputStream ->
-                                        BitmapFactory.decodeStream(inputStream)?.let { bitmap ->
-                                            return@remember bitmap.asImageBitmap()
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    // Try next variation
-                                }
-                            }
-                        }
-                        
-                        // If category-specific image not found, try with just the label
-                        val variations = listOf(
-                            label,                    // Original (e.g., "Hello")
-                            label.lowercase(),        // All lowercase (e.g., "hello")
-                            label.uppercase(),        // All uppercase (e.g., "HELLO")
-                            label.replaceFirstChar { it.uppercase() }, // First letter capital
-                            label.replace(" ", "-"),  // Replace spaces with hyphens (e.g., "hello-world")
-                            label.replace(" ", "_")   // Replace spaces with underscores (e.g., "hello_world")
-                        ).distinct()
-                        
-                        // Try each variation
-                        for (variation in variations) {
-                            try {
-                                context.assets.open("$variation.png").use { inputStream ->
-                                    BitmapFactory.decodeStream(inputStream)?.let { bitmap ->
-                                        return@remember bitmap.asImageBitmap()
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                // Try next variation
-                            }
-                        }
-                        
-                        // If all variations failed, return null
-                        null
+                    // Check if this item has an imagePath (custom image)
+                    val customImageBitmap = remember(imagePath) {
+                        if (imagePath != null && imagePath.isNotEmpty()) {
+                            val bitmap = vocabularyManager.loadBitmapFromPath(imagePath)
+                            bitmap?.asImageBitmap()
+                        } else null
                     }
                     
-                    if (assetBitmap != null) {
-                        // If we found an asset image, use it
-                    Image(
-                            bitmap = assetBitmap,
-                        contentDescription = label,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                    } else if (imageRes != null) {
-                        // If asset not found but we have a resource, use that
-                    Image(
-                            painter = painterResource(id = imageRes),
-                        contentDescription = label,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
+                    if (customImageBitmap != null) {
+                        // If we have a custom image, use it
+                        Log.d("CategoryCard", "Using custom image for $label from path: $imagePath")
+                        Image(
+                            bitmap = customImageBitmap,
+                            contentDescription = label,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
                     } else {
-                        // If no image available, show first letter of label
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label.take(1).uppercase(),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                        // Otherwise try to load image from assets based on both category and label
+                        val assetBitmap = remember(label, category) {
+                            // First try with category-specific image naming
+                            if (category.isNotEmpty()) {
+                                // Try category-specific file first (e.g. "animals/chicken.png" or "food/chicken.png")
+                                val categoryVariations = listOf(
+                                    "$category/$label",               // e.g. "animals/chicken"
+                                    "${category.lowercase()}/${label.lowercase()}",  // e.g. "animals/chicken"
+                                    "${category.lowercase()}${label.replaceFirstChar { it.uppercase() }}",  // e.g. "animalsChicken"
+                                    "${category.lowercase()}_${label.lowercase()}"   // e.g. "animals_chicken"
+                                ).distinct()
+                                
+                                // Try each category variation
+                                for (variation in categoryVariations) {
+                                    // Try WebP first, then fall back to PNG
+                                    for (extension in listOf("webp", "png")) {
+                                        try {
+                                            context.assets.open("$variation.$extension").use { inputStream ->
+                                                BitmapFactory.decodeStream(inputStream)?.let { bitmap ->
+                                                    return@remember bitmap.asImageBitmap()
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            // Try next format or variation
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // If category-specific image not found, try with just the label
+                            val variations = listOf(
+                                label,                    // Original (e.g., "Hello")
+                                label.lowercase(),        // All lowercase (e.g., "hello")
+                                label.uppercase(),        // All uppercase (e.g., "HELLO")
+                                label.replaceFirstChar { it.uppercase() }, // First letter capital
+                                label.replace(" ", "-"),  // Replace spaces with hyphens (e.g., "hello-world")
+                                label.replace(" ", "_")   // Replace spaces with underscores (e.g., "hello_world")
+                            ).distinct()
+                            
+                            // Try each variation
+                            for (variation in variations) {
+                                // Try WebP first, then fall back to PNG
+                                for (extension in listOf("webp", "png")) {
+                                    try {
+                                        context.assets.open("$variation.$extension").use { inputStream ->
+                                            BitmapFactory.decodeStream(inputStream)?.let { bitmap ->
+                                                return@remember bitmap.asImageBitmap()
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        // Try next format or variation
+                                    }
+                                }
+                            }
+                            
+                            // If no image found, return null
+                            null
+                        }
+                        
+                        if (assetBitmap != null) {
+                            // If we found an asset image, use it
+                            Image(
+                                bitmap = assetBitmap,
+                                contentDescription = label,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
                             )
+                        } else if (imageRes != null) {
+                            // If asset not found but we have a resource, use that
+                            Image(
+                                painter = painterResource(id = imageRes),
+                                contentDescription = label,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
+                            )
+                        } else {
+                            // If no image available, show first letter of label
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label.take(1).uppercase(),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colorScheme.onPrimaryContainer
+                                )
+                            }
                         }
                     }
                 }
             }
             
-            // Text label container
-            Box(
-                modifier = Modifier
-                    .weight(0.35f)
-                    .fillMaxWidth()
-                    .padding(top = 1.dp)
-                    .padding(horizontal = 2.dp)
-                    .background(
-                        color = textBackgroundColor,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
-                    )
-                    .shadow(elevation = 1.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = label, 
-                    style = textStyle,
-                    textAlign = TextAlign.Center,
-                    lineHeight = if (textStyle.fontSize.value > 20) (textStyle.fontSize.value * 1.1).sp else 20.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (highContrastMode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+            // Text label container - only show for non-connecting words
+            if (!textOnly) {
+                Box(
                     modifier = Modifier
-                        .padding(horizontal = 1.dp, vertical = 2.dp)
-                )
+                        .weight(0.35f)
+                        .fillMaxWidth()
+                        .padding(top = 1.dp)
+                        .padding(horizontal = 2.dp)
+                        .background(
+                            color = textBackgroundColor,
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                        )
+                        .shadow(elevation = 1.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label, 
+                        style = textStyle,
+                        textAlign = TextAlign.Center,
+                        lineHeight = if (textStyle.fontSize.value > 20) (textStyle.fontSize.value * 1.1).sp else 20.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = colorScheme.onPrimaryContainer,
+                        modifier = Modifier
+                            .padding(horizontal = 1.dp, vertical = 2.dp)
+                    )
+                }
             }
         }
     }

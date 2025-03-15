@@ -19,7 +19,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.freeaac.communicationbuddy.ui.AppNavigation
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.freeaac.communicationbuddy.ui.AACMainScreen
+import com.freeaac.communicationbuddy.ui.settings.SettingsScreen
+import com.freeaac.communicationbuddy.ui.WordEditorScreen
+import com.freeaac.communicationbuddy.ui.CameraScreen
 import com.freeaac.communicationbuddy.ui.theme.CommunicationBuddyTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,7 +40,66 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CommunicationBuddyTheme {
-                AppNavigation()
+                // Surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // Navigation setup
+                    val navController = rememberNavController()
+                    
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main"
+                    ) {
+                        composable("main") {
+                            AACMainScreen(
+                                onNavigateToSettings = {
+                                    navController.navigate("settings")
+                                }
+                            )
+                        }
+                        composable("settings") {
+                            SettingsScreen(
+                                onNavigateBack = {
+                                    navController.popBackStack()
+                                },
+                                onNavigateToWordEditor = { wordId ->
+                                    navController.navigate("word_editor/${wordId ?: "new"}")
+                                }
+                            )
+                        }
+                        composable(
+                            "word_editor/{wordId}",
+                            arguments = listOf(navArgument("wordId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val wordId = backStackEntry.arguments?.getString("wordId")
+                            WordEditorScreen(
+                                wordId = if (wordId == "new") null else wordId,
+                                onNavigateBack = {
+                                    navController.popBackStack()
+                                },
+                                onNavigateToCamera = {
+                                    navController.navigate("camera")
+                                },
+                                onNavigateToWordEditor = { selectedWordId ->
+                                    navController.navigate("word_editor/$selectedWordId")
+                                }
+                            )
+                        }
+                        composable("camera") {
+                            CameraScreen(
+                                onPhotoTaken = { uri ->
+                                    navController.previousBackStackEntry?.savedStateHandle?.set("photo_uri", uri)
+                                    navController.popBackStack()
+                                },
+                                onNavigateBack = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
     }

@@ -20,10 +20,13 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
+import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.border
@@ -76,7 +79,20 @@ fun CameraScreen(
     
     // Preview use case
     val previewView = remember { PreviewView(context) }
-    val imageCapture = remember { ImageCapture.Builder().build() }
+    val imageCapture = remember { 
+        ImageCapture.Builder()
+            .setResolutionSelector(
+                ResolutionSelector.Builder()
+                    .setResolutionStrategy(
+                        ResolutionStrategy(
+                            Size(800, 800),
+                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
+                        )
+                    )
+                    .build()
+            )
+            .build() 
+    }
     val cameraExecutor = remember { ContextCompat.getMainExecutor(context) }
     
     // Camera provider future
@@ -254,7 +270,7 @@ private fun createImageFile(context: Context): File {
     val storageDir = context.getExternalFilesDir(null)
     return File.createTempFile(
         imageFileName,
-        ".jpg",
+        ".webp",
         storageDir
     )
 }
