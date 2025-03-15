@@ -127,7 +127,9 @@ limitations under the License.
 
 ## Contact
 
-[Your Email or Contact Information]
+Email: summansomewhere@gmail.com
+
+GitHub: [summansomewhere](https://github.com/summansomewhere)
 
 ---
 
