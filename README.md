@@ -1,6 +1,6 @@
 # Communication Buddy
 
-<img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="100" align="right" alt="Communication Buddy Logo">
+<img src="github-assets/ic_launcher.png" width="100" align="right" alt="Communication Buddy Logo">
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
