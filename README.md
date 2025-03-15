@@ -1,7 +1,7 @@
 # Communication Buddy
 
 <p align="right">
-  <img src="docs/images/app_logo.png" width="100" alt="Communication Buddy Logo">
+  <img src="readmelogo.png" width="100" alt="Communication Buddy Logo">
 </p>
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
