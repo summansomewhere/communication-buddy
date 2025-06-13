@@ -52,6 +52,7 @@ import kotlinx.coroutines.withContext
 import java.util.*
 import androidx.navigation.NavController
 import android.util.Log
+import com.freeaac.communicationbuddy.util.Translations
 
 // Helper function to open TTS settings safely
 private fun openTTSSettings(context: Context) {
@@ -168,6 +169,12 @@ fun SettingsScreen(
     var autoSpeakWords by remember { mutableStateOf(sharedPrefs.getBoolean("auto_speak_words", true)) }
     var darkMode by remember { mutableStateOf(sharedPrefs.getBoolean("dark_mode", false)) }
     
+    // App language preference (UI labels / card language)
+    var appLanguage by remember { mutableStateOf(sharedPrefs.getString("language", "English") ?: "English") }
+    
+    // Translation helper
+    val tr: (String) -> String = { text -> Translations.translateUI(text, appLanguage) }
+    
     // Track whether settings have been changed
     var settingsChanged by remember { mutableStateOf(false) }
     
@@ -178,6 +185,10 @@ fun SettingsScreen(
     // Create text size options
     val textSizeOptions = listOf("Small", "Medium", "Large", "Extra Large")
     var showTextSizeDialog by remember { mutableStateOf(false) }
+    
+    // App language options
+    val languageOptions = listOf("English", "Spanish")
+    var showAppLanguageDialog by remember { mutableStateOf(false) }
     
     // Voice selection dialogs
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -233,6 +244,7 @@ fun SettingsScreen(
             putBoolean("high_contrast_mode", highContrastMode)
             putBoolean("auto_speak_words", autoSpeakWords)
             putBoolean("dark_mode", darkMode)
+            putString("language", appLanguage)
             // Save selected voice name if available
             selectedVoice?.let { voice ->
                 putString("voice_name", voice.name)
@@ -294,7 +306,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(tr("Settings")) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -324,13 +336,13 @@ fun SettingsScreen(
                                 onClick = saveSettings,
                                 modifier = Modifier.padding(end = 8.dp)
                             ) {
-                                Text("Save")
+                                Text(tr("Save"))
                             }
                             
                             if (showSaveHelp) {
                                 AlertDialog(
                                     onDismissRequest = { showSaveHelp = false },
-                                    title = { Text("Save Settings") },
+                                    title = { Text(tr("Save Settings")) },
                                     text = { 
                                         Text(
                                             "Important: You must tap Save to keep your changes!\n\n" +
@@ -360,7 +372,7 @@ fun SettingsScreen(
         ) {
             // Header sections
             SettingsSectionHeaderWithHelp(
-                title = "Speech Settings",
+                title = tr("Speech Settings"),
                 helpText = "Speech Settings control how the app speaks words and sentences.\n\n" +
                     "In this section, you can:\n" +
                     "• Choose a voice that sounds natural and clear\n" +
@@ -371,7 +383,7 @@ fun SettingsScreen(
             
             // Voice Selection
             SettingsItemWithHelp(
-                title = "Voice",
+                title = tr("Voice"),
                 subtitle = voiceInfoString,
                 helpText = "The voice is what you hear when the app speaks words and sentences. Different voices can sound like different people (male, female, child, etc.) and speak different languages.\n\nYou currently have " + (if (allAvailableVoices.isEmpty()) "no voices" else "${allAvailableVoices.size} voices") + " installed on your device.",
                 icon = Icons.Default.Info,
@@ -407,7 +419,7 @@ fun SettingsScreen(
                         onClick = { speakSample() },
                         modifier = Modifier.padding(vertical = 4.dp)
                     ) {
-                        Text("Test Voice")
+                        Text(tr("Test Voice"))
                     }
                     
                     if (showTestVoiceHelp) {
@@ -518,11 +530,11 @@ fun SettingsScreen(
             HorizontalDivider()
             
             // Appearance Settings
-            SettingsSectionHeader(title = "Appearance")
+            SettingsSectionHeader(title = tr("Appearance"))
             
             // Grid Size
             SettingsItem(
-                title = "Grid Size",
+                title = tr("Grid Size"),
                 subtitle = "$gridSize × $gridSize",
                 icon = Icons.Default.Info
             ) {
@@ -531,16 +543,25 @@ fun SettingsScreen(
             
             // Text Size
             SettingsItem(
-                title = "Text Size",
+                title = tr("Text Size"),
                 subtitle = textSize,
                 icon = Icons.Default.Info
             ) {
                 showTextSizeDialog = true
             }
             
+            // App Language
+            SettingsItem(
+                title = tr("App Language"),
+                subtitle = appLanguage,
+                icon = Icons.Default.Info
+            ) {
+                showAppLanguageDialog = true
+            }
+            
             // High Contrast Mode
             SettingsSwitchItemWithHelp(
-                title = "High Contrast Mode",
+                title = tr("High Contrast Mode"),
                 subtitle = "Enhanced visibility with stronger color contrast",
                 helpText = "High Contrast Mode improves visibility for users with visual impairments by:\n\n" +
                           "• Using color combinations with stronger contrast\n" + 
@@ -559,7 +580,7 @@ fun SettingsScreen(
             
             // Dark Mode
             SettingsSwitchItemWithHelp(
-                title = "Dark Mode",
+                title = tr("Dark Mode"),
                 subtitle = "Use dark theme for better night viewing",
                 helpText = "Dark Mode uses a darker color scheme that is:\n\n" +
                            "• Easier on the eyes in low light environments\n" +
@@ -579,7 +600,7 @@ fun SettingsScreen(
             HorizontalDivider()
             
             // Behavior Settings
-            SettingsSectionHeader(title = "Behavior")
+            SettingsSectionHeader(title = tr("Behavior"))
             
             // Auto-speak Words
             SettingsSwitchItem(
@@ -1123,6 +1144,47 @@ fun SettingsScreen(
                 confirmButton = {
                     TextButton(onClick = { showTextSizeDialog = false }) {
                         Text("Cancel")
+                    }
+                }
+            )
+        }
+        
+        // App Language Selection Dialog
+        if (showAppLanguageDialog) {
+            AlertDialog(
+                onDismissRequest = { showAppLanguageDialog = false },
+                title = { Text("Select App Language") },
+                text = {
+                    Column {
+                        languageOptions.forEach { option ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        appLanguage = option
+                                        showAppLanguageDialog = false
+                                        settingsChanged = true
+                                    }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = appLanguage == option,
+                                    onClick = {
+                                        appLanguage = option
+                                        showAppLanguageDialog = false
+                                        settingsChanged = true
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(option)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showAppLanguageDialog = false }) {
+                        Text("Close")
                     }
                 }
             )

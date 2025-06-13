@@ -101,6 +101,8 @@ import org.json.JSONObject
 import android.util.Log
 import com.freeaac.communicationbuddy.data.prediction.WordPredictionManager
 import com.freeaac.communicationbuddy.ui.prediction.PredictionBar
+import com.freeaac.communicationbuddy.util.Translations
+import java.util.Locale
 
 // Data classes representing an AAC card item and its category.
 data class AACItem(
@@ -139,6 +141,9 @@ fun AACMainScreen(
     
     // Get high contrast mode setting
     val highContrastMode = sharedPrefs.getBoolean("high_contrast_mode", false)
+    
+    // App language preference ("English" by default)
+    val appLanguage = sharedPrefs.getString("language", "English") ?: "English"
     
     // Get auto-speak setting
     val autoSpeakWords = sharedPrefs.getBoolean("auto_speak_words", true)
@@ -232,7 +237,25 @@ fun AACMainScreen(
                             return@TextToSpeech
                         }
                         
-                        // Apply saved voice if available
+                        // Switch TTS language automatically if appLanguage is Spanish
+                        if (appLanguage.equals("Spanish", ignoreCase = true)) {
+                            val localeEs = Locale("es", "ES")
+                            val availability = tts.isLanguageAvailable(localeEs)
+                            if (availability >= TextToSpeech.LANG_AVAILABLE) {
+                                tts.language = localeEs
+                            }
+
+                            // If current voice not Spanish, attempt to choose first Spanish voice
+                            val spanishVoice = tts.voices?.firstOrNull { it.locale.language == "es" }
+                            spanishVoice?.let { voiceCandidate ->
+                                try {
+                                    tts.voice = voiceCandidate
+                                } catch (_: Exception) {
+                                }
+                            }
+                        }
+
+                        // Apply saved voice if available (overrides language change if user selected)
                         if (savedVoiceName != null) {
                             val voices = tts.voices
                             val matchingVoice = voices?.find { it.name == savedVoiceName }
@@ -788,8 +811,12 @@ fun AACMainScreen(
     // Filter displayed items based on search query
     val filteredItems = if (searchQuery.isNotEmpty()) {
         displayedItems.filter { item ->
+            val translatedLabel = Translations.translate(item.label, appLanguage)
+            val translatedCategory = Translations.translateCategory(item.category, appLanguage)
             item.label.contains(searchQuery, ignoreCase = true) ||
-            item.category.contains(searchQuery, ignoreCase = true)
+            translatedLabel.contains(searchQuery, ignoreCase = true) ||
+            item.category.contains(searchQuery, ignoreCase = true) ||
+            translatedCategory.contains(searchQuery, ignoreCase = true)
         }
     } else {
         displayedItems
@@ -974,7 +1001,12 @@ fun AACMainScreen(
                 CategoryGroupBar(
                     categories = categoriesList,
                     selectedCategory = selectedCategory,
-                    onCategorySelected = { selectedCategory = it }
+                    appLanguage = appLanguage,
+                    onCategorySelected = { category ->
+                        selectedCategory = category
+                        searchQuery = "" // Reset search when category changed
+                        isSearchActive = false
+                    }
                 )
             } else if (searchQuery.isNotEmpty() && filteredItems.isNotEmpty()) {
                 // Show search result count
@@ -1075,8 +1107,12 @@ fun AACMainScreen(
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)
                 ) {
                     items(filteredItems) { item ->
+                        // Translate the label if user selected Spanish
+                        val displayLabel = Translations.translate(item.label, appLanguage)
+
                         CategoryCard(
                             label = item.label,
+                            displayLabel = displayLabel,
                             imageRes = item.imageRes,
                             category = item.category,
                             imagePath = item.imagePath,
@@ -1085,9 +1121,9 @@ fun AACMainScreen(
                             highContrastMode = highContrastMode,
                             onClick = {
                                 if (autoSpeakWords) {
-                                    speak(item.label)
+                                    speak(displayLabel)
                                 }
-                                sentenceWords = sentenceWords + item.label
+                                sentenceWords = sentenceWords + displayLabel
                                 
                                 // Add to recent words when clicked
                                 addToRecentWords(item)
@@ -1179,6 +1215,7 @@ fun getTextStyleForPreference(textSizePreference: String): TextStyle {
 fun CategoryGroupBar(
     categories: List<String>,
     selectedCategory: String,
+    appLanguage: String,
     onCategorySelected: (String) -> Unit
 ) {
     LazyRow(
@@ -1221,7 +1258,7 @@ fun CategoryGroupBar(
             ) {
                 Box(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
                     Text(
-                        text = category,
+                        text = Translations.translateCategory(category, appLanguage),
                         style = MaterialTheme.typography.bodyLarge,
                         color = when {
                             // Selected Recents category
@@ -1246,7 +1283,8 @@ fun CategoryGroupBar(
 
 @Composable
 fun CategoryCard(
-    label: String, 
+    label: String, // key / English label used for image lookup
+    displayLabel: String? = null, // optional override for text shown to user
     imageRes: Int? = null, 
     category: String = "", 
     imagePath: String? = null,
@@ -1319,7 +1357,7 @@ fun CategoryCard(
                         Log.d("CategoryCard", "Using custom image for $label from path: $imagePath")
                         Image(
                             bitmap = customImageBitmap,
-                            contentDescription = label,
+                            contentDescription = (displayLabel ?: label),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
                         )
@@ -1387,7 +1425,7 @@ fun CategoryCard(
                             // If we found an asset image, use it
                             Image(
                                 bitmap = assetBitmap,
-                                contentDescription = label,
+                                contentDescription = (displayLabel ?: label),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Fit
                             )
@@ -1395,7 +1433,7 @@ fun CategoryCard(
                             // If asset not found but we have a resource, use that
                             Image(
                                 painter = painterResource(id = imageRes),
-                                contentDescription = label,
+                                contentDescription = (displayLabel ?: label),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Fit
                             )
@@ -1408,7 +1446,7 @@ fun CategoryCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = label.take(1).uppercase(),
+                                    text = (displayLabel ?: label).take(1).uppercase(),
                                     style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = colorScheme.onPrimaryContainer
@@ -1435,7 +1473,7 @@ fun CategoryCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = label, 
+                        text = (displayLabel ?: label),
                         style = textStyle,
                         textAlign = TextAlign.Center,
                         lineHeight = if (textStyle.fontSize.value > 20) (textStyle.fontSize.value * 1.1).sp else 20.sp,
