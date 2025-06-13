@@ -20,10 +20,21 @@ Communication Buddy is designed with simplicity and accessibility in mind, provi
 - **Customizable Interface**: Adjust grid size, text size, and contrast for different needs
 - **Custom Vocabulary**: Add your own custom words and pictures
 - **Backup & Restore**: Save and transfer custom vocabulary
+- **Bilingual (English / Spanish)**: Switch languages instantly—words, categories, settings labels, and Text-to-Speech all localize automatically
 
 ## Screenshots
 
 [Screenshots will be added here]
+
+## Language Support
+
+Communication Buddy now ships with full **Spanish** support. Choose "App Language → Spanish" in Settings and the app will:
+
+1. Display all card labels and category tabs in Spanish while keeping the same pictures.
+2. Translate core Settings labels for a consistent experience.
+3. Automatically switch Text-to-Speech to a Spanish voice when available.
+
+Future translations are welcome—see Contributing below if you'd like to help add another language!
 
 ## Getting Started
 
